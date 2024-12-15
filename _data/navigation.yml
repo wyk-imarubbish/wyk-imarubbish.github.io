@@ -46,27 +46,3 @@ header:
       fr-LU   : *FR
       tr      : &TR       Hakkında
     url: /about.html
-
-  - titles:
-      en      : &EN       My Custom Page
-      en-GB   : *EN
-      en-US   : *EN
-      en-CA   : *EN
-      en-AU   : *EN
-      zh-Hans : &ZH_HANS  自定义页面
-      zh      : *ZH_HANS
-      zh-CN   : *ZH_HANS
-      zh-SG   : *ZH_HANS
-      zh-Hant : &ZH_HANT  自訂頁面
-      zh-TW   : *ZH_HANT
-      zh-HK   : *ZH_HANT
-      ko      : &KO       사용자 정의 페이지
-      ko-KR   : *KO
-      fr      : &FR       Page Personnalisée
-      fr-BE   : *FR
-      fr-CA   : *FR
-      fr-CH   : *FR
-      fr-FR   : *FR
-      fr-LU   : *FR
-      tr      : &TR       Özel Sayfa
-    url: /my-custom-page/
