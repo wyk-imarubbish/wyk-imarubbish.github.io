@@ -1,0 +1,241 @@
+---
+layout: default
+title: "My Custom Page"
+permalink: /my-custom-page/   <!-- 这里设置你页面的 URL 地址 -->
+---
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>分段线性拟合工具</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 0;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        textarea,
+        input {
+            width: 100%;
+            margin-bottom: 20px;
+            font-size: 16px;
+        }
+
+        textarea {
+            height: 150px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        #chart {
+            width: 100%;
+            height: 400px;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjs"></script>
+</head>
+
+<body>
+    <h1>分段线性拟合工具</h1>
+    <p>在下方输入数据点，每行一个点，格式为 <code>U(伏特),R(欧姆)</code>（例如：<code>1,2</code>）。</p>
+    <textarea id="dataInput" placeholder="例如：\n1,2\n3,4\n5,6"></textarea>
+    <p>输入分段点（逗号分隔的电压 U 值）：</p>
+    <input id="breakpoints" placeholder="例如：2,4" />
+    <button onclick="fitPiecewiseLinear()">拟合分段线性曲线</button>
+    <canvas id="chart"></canvas>
+
+    <script>
+        function fitPiecewiseLinear() {
+            const input = document.getElementById('dataInput').value.trim();
+            const breakpointsInput = document.getElementById('breakpoints').value.trim();
+
+            if (!input || !breakpointsInput) {
+                alert('请确保数据点和分段点都已填写！');
+                return;
+            }
+
+            try {
+                // 清除旧的图表数据
+                const ctx = document.getElementById('chart').getContext('2d');
+                if (window.chartInstance) {
+                    window.chartInstance.destroy(); // 销毁旧图表
+                }
+
+                // 解析输入数据点
+                const dataPoints = input.split('\n').map(line => {
+                    const [U, R] = line.split(',').map(Number);
+                    if (isNaN(U) || isNaN(R) || R === 0) {
+                        throw new Error('数据格式错误，请确保每行是有效的 U,R 值，且 R ≠ 0！');
+                    }
+                    const I = (U / R) * 1000; // 计算电流 (mA)
+                    return { U, I };
+                }).sort((a, b) => a.U - b.U); // 按电压 U 值排序
+
+                // 解析分段点
+                const breakpoints = breakpointsInput.split(',').map(Number).filter(U => !isNaN(U));
+                if (breakpoints.length === 0) {
+                    throw new Error('分段点格式错误，请输入有效的 U 值，用逗号分隔！');
+                }
+
+                // 添加数据范围边界作为分段点
+                const UValues = dataPoints.map(p => p.U);
+                const allBreakpoints = [Math.min(...UValues), ...breakpoints, Math.max(...UValues)];
+
+                // 分段拟合
+                const segments = [];
+                for (let i = 0; i < allBreakpoints.length - 1; i++) {
+                    const UMin = allBreakpoints[i];
+                    const UMax = allBreakpoints[i + 1];
+
+                    // 筛选区间内的数据点
+                    const segmentPoints = dataPoints.filter(p => p.U >= UMin && p.U <= UMax);
+                    if (segmentPoints.length < 2) {
+                        throw new Error(`区间 [${UMin}, ${UMax}] 中的数据点不足以进行拟合！`);
+                    }
+
+                    // 执行线性拟合
+                    const USegment = segmentPoints.map(p => p.U);
+                    const ISegment = segmentPoints.map(p => p.I);
+                    const UMean = math.mean(USegment);
+                    const IMean = math.mean(ISegment);
+                    const numerator = math.sum(USegment.map((U, j) => (U - UMean) * (ISegment[j] - IMean)));
+                    const denominator = math.sum(USegment.map(U => (U - UMean) ** 2));
+                    const slope = numerator / denominator;
+                    const intercept = IMean - slope * UMean;
+
+                    // 计算方差
+                    const fittedValues = USegment.map(U => slope * U + intercept);
+                    const variance = math.mean(fittedValues.map((y_hat, idx) => (ISegment[idx] - y_hat) ** 2));
+
+                    // 保存拟合结果
+                    segments.push({
+                        U: USegment,
+                        I: USegment.map(U => slope * U + intercept),
+                        slope,
+                        intercept,
+                        variance,
+                        equation: `I = ${slope.toFixed(2)}U + ${intercept.toFixed(2)}\n方差 = ${variance.toFixed(4)}`
+                    });
+                }
+
+                // 为了确保在分段点处的拟合曲线延长到分段点，计算分段点处的值
+                const extendedDataPoints = [];
+                segments.forEach((segment, i) => {
+                    const breakPointLeft = allBreakpoints[i];
+                    const breakPointRight = allBreakpoints[i + 1];
+
+                    // 计算左侧分段点的I值
+                    const ILeft = segment.slope * breakPointLeft + segment.intercept;
+                    extendedDataPoints.push({ x: breakPointLeft, y: ILeft });
+
+                    // 计算右侧分段点的I值
+                    const IRight = segment.slope * breakPointRight + segment.intercept;
+                    extendedDataPoints.push({ x: breakPointRight, y: IRight });
+
+                });
+
+                // 显示拟合结果
+                const datasets = [
+                    {
+                        label: '原始数据',
+                        data: dataPoints.map(p => ({ x: p.U, y: p.I })),
+                        backgroundColor: 'red',
+                        type: 'scatter'
+                    },
+                    {
+                        label: '拟合曲线',
+                        data: extendedDataPoints,
+                        type: 'line',
+                        borderColor: 'blue',
+                        fill: false
+                    }
+                ];
+
+                // 绘制分段点上的垂直虚线
+                const breakpointsLines = breakpoints.map(bp => ({
+                    x: bp,
+                    y1: Math.min(...dataPoints.map(p => p.I)), // 获取最低电流
+                    y2: Math.max(...dataPoints.map(p => p.I))  // 获取最高电流
+                }));
+
+                breakpointsLines.forEach(line => {
+                    datasets.push({
+                        label: `分段点 ${line.x}`,
+                        data: [
+                            { x: line.x, y: line.y1 },
+                            { x: line.x, y: line.y2 }
+                        ],
+                        borderColor: 'black',
+                        borderWidth: 1,
+                        type: 'line',
+                        fill: false,
+                        borderDash: [5, 5] // 虚线
+                    });
+                });
+
+                // 在每一段上添加方程和方差的文本标注
+                segments.forEach((segment, index) => {
+                    const midPointU = (allBreakpoints[index] + allBreakpoints[index + 1]) / 2;
+                    const midPointI = segment.slope * midPointU + segment.intercept;
+                    const equationLabel = `分段${index + 1}: I = ${segment.slope.toFixed(2)}U + ${segment.intercept.toFixed(2)}\n方差 = ${segment.variance.toFixed(4)}`;
+
+                    datasets.push({
+                        label: equationLabel,
+                        data: [{ x: midPointU, y: midPointI }],
+                        backgroundColor: 'blue',
+                        borderColor: 'transparent',
+                        type: 'scatter',
+                        pointStyle: 'rect',
+                        pointRadius: 0,
+                        labelFontSize: 10,
+                        pointLabel: equationLabel
+                    });
+                });
+
+                // 绘制图表
+                window.chartInstance = new Chart(ctx, {
+                    type: 'scatter',
+                    data: { datasets },
+                    options: {
+                        scales: {
+                            x: { type: 'linear', position: 'bottom', title: { display: true, text: '电压 U (V)' } },
+                            y: { type: 'linear', title: { display: true, text: '电流 I (mA)' } }
+                        },
+                        plugins: {
+                            tooltip: {
+                                enabled: true
+                            }
+                        }
+                    }
+                });
+
+                alert('分段线性拟合完成！请查看图表。温馨提示：选择合适的分段点可以让图表更好看！');
+            } catch (error) {
+                alert(`错误: ${error.message}`);
+            }
+        }
+    </script>
+
+
+
+</body>
+
+</html>
