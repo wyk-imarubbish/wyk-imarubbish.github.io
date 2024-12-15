@@ -1,5 +1,5 @@
 ---
-title: 生日问题
+title: 错排问题
 tags: 概率论
 article_header:
   type: cover
