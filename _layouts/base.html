@@ -54,8 +54,8 @@ layout: none
           trail.classList.add("trail");
 
           // 计算相对于视口的位置，加上滚动偏移量
-          const offsetX = e.pageX + window.scrollX;
-          const offsetY = e.pageY + window.scrollY;
+          const offsetX = e.pageX;
+          const offsetY = e.pageY;
 
           trail.style.left = `${offsetX}px`;
           trail.style.top = `${offsetY}px`;
