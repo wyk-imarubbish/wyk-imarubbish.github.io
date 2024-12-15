@@ -38,8 +38,9 @@ layout: none
       canvas.height = window.innerHeight;
       canvas.setAttribute('style', 'position:fixed;left:0;top:0;pointer-events:none;filter:blur(2px);');
 
+      var clicks = [];
       var points = [];  // 定义粒子数组
-      var live = 100;  // 存活周期增加，让拖尾效果更加明显
+      var live = 50;  // 存活50个周期
       var colors = [  // 备选粒子颜色数组
         "236, 204, 104",
         "255, 71, 87",
@@ -47,9 +48,9 @@ layout: none
         "123, 237, 159"
       ];
 
-      // 鼠标移动时添加粒子，粒子持续跟随鼠标并形成拖尾
+      // 鼠标移动时添加粒子
       window.addEventListener("mousemove", function (evt) {
-        for (var i = 0; i < 5; i++) {  // 每次鼠标移动生成 5 个粒子
+        for (var i = 0; i < 6; i++) {
           points.push({
             sx: evt.x,  // 鼠标当前坐标作为粒子坐标
             sy: evt.y,
@@ -62,14 +63,28 @@ layout: none
         }
       });
 
-      // 绘制粒子，使粒子形成拖尾效果
+      // 鼠标点击时添加更多粒子
+      window.addEventListener("click", function (evt) {
+        for (var i = 0; i < 100; i++) {
+          clicks.push({
+            sx: evt.x,
+            sy: evt.y,
+            color: colors[parseInt(Math.random() * colors.length)],
+            life: live,
+            vx: 0.5 - Math.random(),  // x轴及y轴的移动向量，取值范围为-0.5 ~ 0.5
+            vy: 0.5 - Math.random(),
+          });
+        }
+      });
+
+      // 绘制粒子
       function drawpoints() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);  // 清屏
         for (var i = 0; i < points.length; i++) {
           var point = points[i];
           ctx.beginPath();
           ctx.arc(point.sx, point.sy, point.size, Math.PI * 2, false);  // 根据粒子属性画圆
-          ctx.fillStyle = "rgba(" + point.color + "," + point.life / live + ")";  // 根据粒子属性设置填充颜色及透明度
+          ctx.fillStyle = "rgba(" + point.color + "," + point.life / live * 0.7 + ")";  // 根据粒子属性设置填充颜色及透明度
           ctx.fill();  // 填充颜色
           point.life--;  // 生命值减1
           if (point.life <= 0) {  // 生命值为0则从粒子数组中删除
@@ -77,7 +92,20 @@ layout: none
           }
           point.sx += point.vx * 3;  // 根据向量值改变粒子位置
           point.sy += point.vy * 3;
-          point.vy += 0.03;  // 增加重力效果，让粒子垂直方向的速度增加，形成自然下落的效果
+          point.vy += 0.03;
+        }
+
+        for (var i = 0; i < clicks.length; i++) {
+          var click = clicks[i];
+          ctx.fillStyle = "rgba(" + click.color + "," + click.life / live + ")";
+          ctx.fillRect(click.sx, click.sy, 3, 3);
+          click.sx += click.vx * 10;
+          click.sy += click.vy * 10;
+          click.vy += 0.02;
+          click.life--;
+          if (click.life <= 0) {
+            clicks.splice(i, 1);
+          }
         }
       }
 
