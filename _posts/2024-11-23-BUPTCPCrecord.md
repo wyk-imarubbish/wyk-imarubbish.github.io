@@ -1,6 +1,7 @@
 ---
 title: 2024BUPT校赛游记
-tag: 记录
+tag: 记录 
+mathjax: true
 ---
 > 时隔一个月，还是觉得有点梦幻。
 

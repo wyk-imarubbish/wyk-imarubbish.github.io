@@ -1,6 +1,7 @@
 ---
 title: 树的直径
 tag: 算法笔记
+mathjax: true
 ---
 ## 定义：
 

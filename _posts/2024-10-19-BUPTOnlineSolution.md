@@ -1,6 +1,7 @@
 ---
 title: 2024BUPT网络赛题解
 tag: 题解
+mathjax: true
 ---
 # 2024 BUPTCPC Qualified Round 题解（A~D）
 
