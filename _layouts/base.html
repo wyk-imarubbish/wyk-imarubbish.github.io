@@ -13,18 +13,7 @@ layout: none
       {%- include scripts/lib/lazyload.js -%}
     </script>
     {%- include scripts/variables.html -%}
-    <!-- 引入 tsparticles 库 -->
-    <script src="https://cdn.jsdelivr.net/npm/tsparticles@2.0.0-beta.3/dist/tsparticles.bundle.min.js"></script>
     <style>
-      .trail {
-        position: absolute; /* 使用 absolute 定位来避免与页面内容重叠 */
-        width: 10px;
-        height: 10px;
-        border-radius: 50%;
-        background-color: rgba(0, 150, 255, 0.7);
-        pointer-events: none;
-        animation: fade 1s ease-out forwards;
-      }
       #tsparticles {
         position: fixed;
         top: 0;
@@ -33,14 +22,6 @@ layout: none
         height: 100%;
         z-index: -1;
       }
-      @keyframes fade {
-        from {
-          opacity: 1;
-        }
-        to {
-          opacity: 0;
-        }
-      }
     </style>
   </head>
   <body>
@@ -48,64 +29,87 @@ layout: none
       {{ content }}
     </div>
 
-    <!-- 初始化 tsparticles -->
+    <!-- 添加canvas元素用于绘制粒子效果 -->
     <script>
-      document.addEventListener("DOMContentLoaded", function() {
-        tsParticles.load("tsparticles", {
-          particles: {
-            number: {
-              value: 100,
-              density: {
-                enable: true,
-                value_area: 800
-              }
-            },
-            shape: {
-              type: "circle",
-            },
-            size: {
-              value: 5
-            },
-            move: {
-              enable: true,
-              speed: 2,
-              direction: "none"
-            },
-          },
-          interactivity: {
-            events: {
-              onhover: {
-                enable: true,
-                mode: "repulse"
-              },
-              onclick: {
-                enable: true,
-                mode: "push"
-              }
-            }
+      var canvas = document.createElement("canvas");
+      var ctx = canvas.getContext("2d");
+      window.document.body.appendChild(canvas);
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      canvas.setAttribute('style', 'position:fixed;left:0;top:0;pointer-events:none;filter:blur(2px);');
+
+      var clicks = [];
+      var points = [];  // 定义粒子数组
+      var live = 50;  // 存活50个周期
+      var colors = [  // 备选粒子颜色数组
+        "236, 204, 104",
+        "255, 71, 87",
+        "112, 161, 255",
+        "123, 237, 159"
+      ];
+
+      // 鼠标移动时添加粒子
+      window.addEventListener("mousemove", function (evt) {
+        for (var i = 0; i < 15; i++) {
+          points.push({
+            sx: evt.x,  // 鼠标当前坐标作为粒子坐标
+            sy: evt.y,
+            vx: 0.5 - Math.random(),  // x轴及y轴的移动向量，取值范围为-0.5 ~ 0.5
+            vy: 0.5 - Math.random(),
+            life: live,  // 存活周期
+            color: colors[parseInt(Math.random() * colors.length)],  // 随机选择颜色
+            size: Math.random() * 5  // 随机粒子尺寸，取值范围为0~5
+          });
+        }
+      });
+
+      // 鼠标点击时添加更多粒子
+      window.addEventListener("click", function (evt) {
+        for (var i = 0; i < 100; i++) {
+          clicks.push({
+            sx: evt.x,
+            sy: evt.y,
+            color: colors[parseInt(Math.random() * colors.length)],
+            life: live,
+            vx: 0.5 - Math.random(),  // x轴及y轴的移动向量，取值范围为-0.5 ~ 0.5
+            vy: 0.5 - Math.random(),
+          });
+        }
+      });
+
+      // 绘制粒子
+      function drawpoints() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);  // 清屏
+        for (var i = 0; i < points.length; i++) {
+          var point = points[i];
+          ctx.beginPath();
+          ctx.arc(point.sx, point.sy, point.size, Math.PI * 2, false);  // 根据粒子属性画圆
+          ctx.fillStyle = "rgba(" + point.color + "," + point.life / live + ")";  // 根据粒子属性设置填充颜色及透明度
+          ctx.fill();  // 填充颜色
+          point.life--;  // 生命值减1
+          if (point.life <= 0) {  // 生命值为0则从粒子数组中删除
+            points.splice(i, 1);
           }
-        });
-      });
-    </script>
+          point.sx += point.vx * 3;  // 根据向量值改变粒子位置
+          point.sy += point.vy * 3;
+          point.vy += 0.03;
+        }
 
-    <!-- 鼠标粒子效果的脚本 -->
-    <script>
-      document.addEventListener("mousemove", function (e) {
-        const trail = document.createElement("div");
-        trail.classList.add("trail");
+        for (var i = 0; i < clicks.length; i++) {
+          var click = clicks[i];
+          ctx.fillStyle = "rgba(" + click.color + "," + click.life / live + ")";
+          ctx.fillRect(click.sx, click.sy, 3, 3);
+          click.sx += click.vx * 10;
+          click.sy += click.vy * 10;
+          click.vy += 0.02;
+          click.life--;
+          if (click.life <= 0) {
+            clicks.splice(i, 1);
+          }
+        }
+      }
 
-        // 计算相对于视口的位置，加上滚动偏移量
-        const offsetX = e.pageX;
-        const offsetY = e.pageY;
-
-        trail.style.left = `${offsetX}px`;
-        trail.style.top = `${offsetY}px`;
-
-        document.body.appendChild(trail);
-
-        // 移除粒子效果
-        setTimeout(() => trail.remove(), 1000);
-      });
+      setInterval(drawpoints, 20);  // 20毫秒绘制一次
     </script>
 
     <script>
