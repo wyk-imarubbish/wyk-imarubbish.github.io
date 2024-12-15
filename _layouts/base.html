@@ -13,11 +13,40 @@ layout: none
       {%- include scripts/lib/lazyload.js -%}
     </script>
     {%- include scripts/variables.html -%}
+    <style>
+      .trail {
+        position: fixed;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background-color: rgba(0, 150, 255, 0.7);
+        pointer-events: none;
+        animation: fade 1s ease-out forwards;
+      }
+      @keyframes fade {
+        from {
+          opacity: 1;
+        }
+        to {
+          opacity: 0;
+        }
+      }
+    </style>
   </head>
   <body>
     <div class="root" data-is-touch="false">
       {{ content }}
     </div>
+    <script>
+      document.addEventListener("mousemove", function (e) {
+        const trail = document.createElement("div");
+        trail.classList.add("trail");
+        trail.style.left = `${e.pageX}px`;
+        trail.style.top = `${e.pageY}px`;
+        document.body.appendChild(trail);
+        setTimeout(() => trail.remove(), 1000);
+      });
+    </script>
     <script>
       {%- include scripts/common.js -%}
     </script>
