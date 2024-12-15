@@ -15,7 +15,7 @@ layout: none
     {%- include scripts/variables.html -%}
     <style>
       .trail {
-        position: fixed;
+        position: absolute; /* 使用 absolute 定位来避免与页面内容重叠 */
         width: 10px;
         height: 10px;
         border-radius: 50%;
@@ -45,16 +45,29 @@ layout: none
     <div class="root" data-is-touch="false">
       {{ content }}
     </div>
+
+    <!-- 鼠标粒子效果的脚本 -->
     <script>
-      document.addEventListener("mousemove", function (e) {
-        const trail = document.createElement("div");
-        trail.classList.add("trail");
-        trail.style.left = `${e.pageX}px`;
-        trail.style.top = `${e.pageY}px`;
-        document.body.appendChild(trail);
-        setTimeout(() => trail.remove(), 1000);
+      document.addEventListener("DOMContentLoaded", function() {
+        document.addEventListener("mousemove", function (e) {
+          const trail = document.createElement("div");
+          trail.classList.add("trail");
+
+          // 计算相对于视口的位置，加上滚动偏移量
+          const offsetX = e.pageX + window.scrollX;
+          const offsetY = e.pageY + window.scrollY;
+
+          trail.style.left = `${offsetX}px`;
+          trail.style.top = `${offsetY}px`;
+
+          document.body.appendChild(trail);
+
+          // 移除粒子效果
+          setTimeout(() => trail.remove(), 1000);
+        });
       });
     </script>
+
     <script>
       {%- include scripts/common.js -%}
     </script>
