@@ -1,10 +1,6 @@
 ---
 title: 错排问题
 tags: 概率论
-article_header:
-  type: cover
-  image:
-    src: /screenshot.jpg
 ---
 # 用概率论求N阶行列式展开式中含主对角线元素的个数
 
