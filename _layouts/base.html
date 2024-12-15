@@ -13,6 +13,8 @@ layout: none
       {%- include scripts/lib/lazyload.js -%}
     </script>
     {%- include scripts/variables.html -%}
+    <!-- 引入 tsparticles 库 -->
+    <script src="https://cdn.jsdelivr.net/npm/tsparticles@2.0.0-beta.3/dist/tsparticles.bundle.min.js"></script>
     <style>
       .trail {
         position: absolute; /* 使用 absolute 定位来避免与页面内容重叠 */
@@ -46,25 +48,63 @@ layout: none
       {{ content }}
     </div>
 
-    <!-- 鼠标粒子效果的脚本 -->
+    <!-- 初始化 tsparticles -->
     <script>
       document.addEventListener("DOMContentLoaded", function() {
-        document.addEventListener("mousemove", function (e) {
-          const trail = document.createElement("div");
-          trail.classList.add("trail");
-
-          // 计算相对于视口的位置，加上滚动偏移量
-          const offsetX = e.pageX;
-          const offsetY = e.pageY;
-
-          trail.style.left = `${offsetX}px`;
-          trail.style.top = `${offsetY}px`;
-
-          document.body.appendChild(trail);
-
-          // 移除粒子效果
-          setTimeout(() => trail.remove(), 1000);
+        tsParticles.load("tsparticles", {
+          particles: {
+            number: {
+              value: 100,
+              density: {
+                enable: true,
+                value_area: 800
+              }
+            },
+            shape: {
+              type: "circle",
+            },
+            size: {
+              value: 5
+            },
+            move: {
+              enable: true,
+              speed: 2,
+              direction: "none"
+            },
+          },
+          interactivity: {
+            events: {
+              onhover: {
+                enable: true,
+                mode: "repulse"
+              },
+              onclick: {
+                enable: true,
+                mode: "push"
+              }
+            }
+          }
         });
+      });
+    </script>
+
+    <!-- 鼠标粒子效果的脚本 -->
+    <script>
+      document.addEventListener("mousemove", function (e) {
+        const trail = document.createElement("div");
+        trail.classList.add("trail");
+
+        // 计算相对于视口的位置，加上滚动偏移量
+        const offsetX = e.pageX;
+        const offsetY = e.pageY;
+
+        trail.style.left = `${offsetX}px`;
+        trail.style.top = `${offsetY}px`;
+
+        document.body.appendChild(trail);
+
+        // 移除粒子效果
+        setTimeout(() => trail.remove(), 1000);
       });
     </script>
 
