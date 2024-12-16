@@ -1,9 +1,7 @@
 ---
-title: 2024BUPT网络赛题解
+title: 2024BUPT网络赛题解(A~D)
 tag: 题解
 ---
-# 2024 BUPTCPC Qualified Round 题解（A~D）
-
 ## Problem A. 板烧鸡腿堡 
 
 ### 题意简述
