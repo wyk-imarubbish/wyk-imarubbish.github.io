@@ -1,6 +1,9 @@
 ---
-title: LlamaIndex 实现Agentic RAG
-tag: 大模型, RAG
+layout: post
+title: LlamaIndex实现Agentic RAG
+tags:
+  - 大模型
+  - RAG
 ---
 
 > 参考：[【RAG检索增强生成】LlamaIndex与Qwen2的高效检索增强生成实践_llamaindex qwen2-CSDN博客](https://blog.csdn.net/xiaobing259/article/details/140593905)
