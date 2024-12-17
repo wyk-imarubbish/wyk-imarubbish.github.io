@@ -1,5 +1,6 @@
 ---
 title: 2024BUPT校赛游记
+published: false
 tag: 记录
 ---
 > 时隔一个月，还是觉得有点梦幻。
