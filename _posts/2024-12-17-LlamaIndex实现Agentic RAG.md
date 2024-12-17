@@ -1,5 +1,4 @@
 ---
-layout: post
 title: LlamaIndex实现Agentic RAG
 tags:
   - 大模型
