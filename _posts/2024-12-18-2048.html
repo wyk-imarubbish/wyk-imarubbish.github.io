@@ -1,0 +1,257 @@
+---
+layout: None
+permalink: 2048
+---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2048 Game - Purple Theme</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #2d2a4a;
+            color: #ffffff;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        #game-container {
+            text-align: center;
+        }
+
+        .score-container {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .score {
+            background-color: #5d4b8c;
+            padding: 10px;
+            border-radius: 8px;
+            color: #ffffff;
+            font-size: 20px;
+        }
+
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(4, 80px);
+            gap: 10px;
+            background-color: #3d3573;
+            padding: 10px;
+            border-radius: 10px;
+        }
+
+        .tile {
+            width: 80px;
+            height: 80px;
+            background-color: #8777b5;
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            color: #ffffff;
+            font-weight: bold;
+        }
+
+        .tile[data-value="2"] {
+            background-color: #f2e5ff;
+            color: #4a0072;
+        }
+
+        .tile[data-value="4"] {
+            background-color: #e1b8ff;
+            color: #4a0072;
+        }
+
+        .tile[data-value="8"] {
+            background-color: #d09aff;
+            color: #ffffff;
+        }
+
+        .tile[data-value="16"] {
+            background-color: #c07dff;
+            color: #ffffff;
+        }
+
+        .tile[data-value="32"] {
+            background-color: #af5eff;
+            color: #ffffff;
+        }
+
+        .tile[data-value="64"] {
+            background-color: #9f40ff;
+            color: #ffffff;
+        }
+
+        .tile[data-value="128"] {
+            background-color: #8f20ff;
+            color: #ffffff;
+        }
+
+        .tile[data-value="256"] {
+            background-color: #8000ff;
+            color: #ffffff;
+        }
+
+        .tile[data-value="512"] {
+            background-color: #6f00e6;
+            color: #ffffff;
+        }
+
+        .tile[data-value="1024"] {
+            background-color: #5f00cc;
+            color: #ffffff;
+        }
+
+        .tile[data-value="2048"] {
+            background-color: #4f00b3;
+            color: #ffffff;
+        }
+
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div class="score-container">
+            <div class="score" id="current-score">Score: 0</div>
+            <div class="score" id="best-score">Best: 0</div>
+        </div>
+        <div class="game-board" id="game-board"></div>
+    </div>
+
+    <script>
+        const boardSize = 4;
+        const gameBoard = document.getElementById('game-board');
+        const currentScoreEl = document.getElementById('current-score');
+        const bestScoreEl = document.getElementById('best-score');
+
+        let board = [];
+        let score = 0;
+        let bestScore = localStorage.getItem('bestScore') || 0;
+        bestScoreEl.innerText = `Best: ${bestScore}`;
+
+        function initBoard() {
+            board = Array(boardSize).fill(null).map(() => Array(boardSize).fill(0));
+            addRandomTile();
+            addRandomTile();
+            renderBoard();
+        }
+
+        function addRandomTile() {
+            const emptyTiles = [];
+            for (let r = 0; r < boardSize; r++) {
+                for (let c = 0; c < boardSize; c++) {
+                    if (board[r][c] === 0) emptyTiles.push({ r, c });
+                }
+            }
+
+            if (emptyTiles.length === 0) return;
+
+            const { r, c } = emptyTiles[Math.floor(Math.random() * emptyTiles.length)];
+            board[r][c] = Math.random() < 0.9 ? 2 : 4;
+        }
+
+        function renderBoard() {
+            gameBoard.innerHTML = '';
+            for (let r = 0; r < boardSize; r++) {
+                for (let c = 0; c < boardSize; c++) {
+                    const tile = document.createElement('div');
+                    tile.classList.add('tile');
+                    if (board[r][c] > 0) {
+                        tile.setAttribute('data-value', board[r][c]);
+                        tile.innerText = board[r][c];
+                    }
+                    gameBoard.appendChild(tile);
+                }
+            }
+            currentScoreEl.innerText = `Score: ${score}`;
+        }
+
+        function moveBoard(direction) {
+            let moved = false;
+            if (direction === 'up' || direction === 'down') {
+                for (let c = 0; c < boardSize; c++) {
+                    const column = board.map(row => row[c]);
+                    const newColumn = combineTiles(direction === 'up' ? column : column.reverse());
+                    newColumn.forEach((value, r) => {
+                        if (board[r][c] !== value) moved = true;
+                        board[r][c] = direction === 'up' ? value : newColumn[newColumn.length - 1 - r];
+                    });
+                }
+            } else {
+                for (let r = 0; r < boardSize; r++) {
+                    const row = board[r];
+                    const newRow = combineTiles(direction === 'left' ? row : row.reverse());
+                    newRow.forEach((value, c) => {
+                        if (board[r][c] !== value) moved = true;
+                        board[r][c] = direction === 'left' ? value : newRow[newRow.length - 1 - c];
+                    });
+                }
+            }
+
+            if (moved) {
+                addRandomTile();
+                renderBoard();
+                checkGameOver();
+            }
+        }
+
+        function combineTiles(row) {
+            const nonZeroTiles = row.filter(value => value !== 0);
+            for (let i = 0; i < nonZeroTiles.length - 1; i++) {
+                if (nonZeroTiles[i] === nonZeroTiles[i + 1]) {
+                    nonZeroTiles[i] *= 2;
+                    score += nonZeroTiles[i];
+                    nonZeroTiles[i + 1] = 0;
+                }
+            }
+            const newRow = nonZeroTiles.filter(value => value !== 0);
+            while (newRow.length < boardSize) newRow.push(0);
+            return newRow;
+        }
+
+        function checkGameOver() {
+            for (let r = 0; r < boardSize; r++) {
+                for (let c = 0; c < boardSize; c++) {
+                    if (board[r][c] === 0) return;
+                    if (r < boardSize - 1 && board[r][c] === board[r + 1][c]) return;
+                    if (c < boardSize - 1 && board[r][c] === board[r][c + 1]) return;
+                }
+            }
+            alert('Game Over!');
+            if (score > bestScore) {
+                bestScore = score;
+                localStorage.setItem('bestScore', bestScore);
+                bestScoreEl.innerText = `Best: ${bestScore}`;
+            }
+            initBoard();
+        }
+
+        document.addEventListener('keydown', (e) => {
+            switch (e.key) {
+                case 'ArrowUp':
+                    moveBoard('up');
+                    break;
+                case 'ArrowDown':
+                    moveBoard('down');
+                    break;
+                case 'ArrowLeft':
+                    moveBoard('left');
+                    break;
+                case 'ArrowRight':
+                    moveBoard('right');
+                    break;
+            }
+        });
+
+        initBoard();
+    </script>
+</body>
+</html>
