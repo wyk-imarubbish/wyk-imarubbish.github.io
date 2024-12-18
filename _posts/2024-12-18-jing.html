@@ -14,30 +14,40 @@ tag: 游戏
             align-items: center;
             height: 100vh;
             font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 10px;
+            box-sizing: border-box;
         }
+        
         #gameBoard {
             display: grid;
-            grid-template-columns: repeat(3, 100px);
-            grid-template-rows: repeat(3, 100px);
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
             gap: 5px;
+            width: 90vmin;
+            height: 90vmin;
+            max-width: 500px;
+            max-height: 500px;
         }
         .cell {
-            width: 100px;
-            height: 100px;
             display: flex;
             justify-content: center;
             align-items: center;
             font-size: 2em;
             background-color: #f0f0f0;
             cursor: pointer;
+            user-select: none;
         }
+        
         .cell:hover {
             background-color: #e0e0e0;
         }
+        
         #message {
             margin-top: 20px;
             text-align: center;
-        }
+            font-size: 1.2em;
+        }        
     </style>
 </head>
 <body>
