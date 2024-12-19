@@ -23,14 +23,20 @@ for file in *.md; do
 
         # 如果图片文件存在，移动到目标目录
         if [ -f "$img_path" ]; then
-            mv "$img_path" "$TARGET_DIR$img_name"
+            cp "$img_path" "$TARGET_DIR$img_name"
             echo "Moved $img_path to $TARGET_DIR$img_name"
         else
             echo "Image $img_path not found!"
         fi
 
+        # 将路径中的反斜杠替换为正斜杠
+        img_path=$(echo "$img_path" | sed 's|\\|\\\\|g')
+
+        echo "replace path to $img_path"
+    
         # 更新Markdown文件中的图片路径为相对路径
         sed -i "s|$img_path|/assets/images/$img_name|g" "$file"
+
     done
 done
 
