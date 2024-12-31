@@ -1,0 +1,40 @@
+---
+layout: None
+title: 跨年倒计时
+tag: 网页
+---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>跨年特效网页</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">跨年倒计时</h1>
+        <div class="countdown">
+            <div class="countdown-item">
+                <span class="value" id="days">00</span>
+                <span class="text">天</span>
+            </div>
+            <div class="countdown-item">
+                <span class="value" id="hours">00</span>
+                <span class="text">小时</span>
+            </div>
+            <div class="countdown-item">
+                <span class="value" id="minutes">00</span>
+                <span class="text">分钟</span>
+            </div>
+            <div class="countdown-item">
+                <span class="value" id="seconds">00</span>
+                <span class="text">秒</span>
+            </div>
+        </div>
+        <div class="fireworks" id="fireworks"></div>
+        <p class="message">祝你新年快乐！</p>
+    </div>
+    <canvas id="particleCanvas"></canvas>
+    <script src="script.js"></script>
+</body>
+</html>
