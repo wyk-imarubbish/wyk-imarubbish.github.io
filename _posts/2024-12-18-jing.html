@@ -16,43 +16,98 @@ tag: 游戏
             height: 100%;
             font-family: Arial, sans-serif;
             margin: 0;
-            padding: 10px;
+            padding: 20px;
             box-sizing: border-box;
+            background-color: #f5f5f5;
         }
         
+        .container {
+            text-align: center;
+        }
+
         #gameBoard {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             grid-template-rows: repeat(3, 1fr);
-            gap: 5px;
+            gap: 8px;
             width: 90vmin;
             height: 90vmin;
             max-width: 500px;
             max-height: 500px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
+
         .cell {
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 2em;
-            background-color: #f0f0f0;
+            font-size: 3em;
+            background-color: #ffffff;
+            border: 2px solid #ddd;
+            border-radius: 8px;
             cursor: pointer;
             user-select: none;
+            transition: all 0.2s ease;
         }
         
         .cell:hover {
-            background-color: #e0e0e0;
+            background-color: #f0f0f0;
+            transform: scale(1.02);
+        }
+        
+        .cell.x {
+            color: #e74c3c;
+        }
+        
+        .cell.o {
+            color: #3498db;
         }
         
         #message {
             margin-top: 20px;
             text-align: center;
-            font-size: 1.2em;
-        }        
+            font-size: 1.4em;
+            color: #333;
+            font-weight: bold;
+        }
+        
+        #controls {
+            margin-top: 20px;
+        }
+        
+        button {
+            padding: 10px 20px;
+            font-size: 1.1em;
+            background-color: #2ecc71;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        button:hover {
+            background-color: #27ae60;
+        }
+
+        .winning-cell {
+            background-color: #e8f5e9;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
     </style>
 </head>
 <body>
-    <div>
+    <div class="container">
         <div id="gameBoard">
             <div class="cell" data-index="0"></div>
             <div class="cell" data-index="1"></div>
@@ -65,6 +120,9 @@ tag: 游戏
             <div class="cell" data-index="8"></div>
         </div>
         <div id="message"></div>
+        <div id="controls">
+            <button onclick="resetGame()">重新开始</button>
+        </div>
     </div>
     <script>
         const cells = document.querySelectorAll('.cell');
@@ -94,15 +152,18 @@ tag: 游戏
 
             board[clickedIndex] = currentPlayer;
             clickedCell.textContent = currentPlayer;
+            clickedCell.classList.add(currentPlayer.toLowerCase());
 
-            if (checkWin()) {
-                message.textContent = `玩家 ${currentPlayer} 获胜！`;
+            const winningCombo = checkWin();
+            if (winningCombo) {
+                highlightWinningCells(winningCombo);
+                message.textContent = `🎉 玩家 ${currentPlayer} 获胜！`;
                 gameActive = false;
                 return;
             }
 
             if (board.every(cell => cell !== '')) {
-                message.textContent = '平局！';
+                message.textContent = '🤝 平局！';
                 gameActive = false;
                 return;
             }
@@ -112,8 +173,29 @@ tag: 游戏
         }
 
         function checkWin() {
-            return winningConditions.some(condition => {
-                return condition.every(index => board[index] === currentPlayer);
+            for (const condition of winningConditions) {
+                if (condition.every(index => board[index] === currentPlayer)) {
+                    return condition;
+                }
+            }
+            return null;
+        }
+
+        function highlightWinningCells(winningCombo) {
+            winningCombo.forEach(index => {
+                cells[index].classList.add('winning-cell');
+            });
+        }
+
+        function resetGame() {
+            board = ['', '', '', '', '', '', '', '', ''];
+            gameActive = true;
+            currentPlayer = 'X';
+            message.textContent = `轮到玩家 ${currentPlayer}`;
+            
+            cells.forEach(cell => {
+                cell.textContent = '';
+                cell.classList.remove('x', 'o', 'winning-cell');
             });
         }
 
