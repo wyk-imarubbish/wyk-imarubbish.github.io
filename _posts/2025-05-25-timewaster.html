@@ -1,0 +1,142 @@
+---
+layout: None
+title: 资本做局器
+tag: 网页
+---
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>资本做局器</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 确保 Inter 字体可用 */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5; /* 浅灰色背景 */
+        }
+        /* 自定义进度条动画 */
+        @keyframes progressAnimation {
+            from { width: 0%; }
+            to { width: 100%; }
+        }
+        .progress-bar-fill {
+            animation: progressAnimation 10s linear forwards;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+
+    <div class="flex flex-col items-center justify-center bg-white p-8 rounded-xl shadow-lg max-w-sm w-full">
+        <h1 class="text-3xl font-bold text-gray-800 mb-6 text-center">资本做局器</h1>
+        <button id="startButton" class="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-blue-300">
+            开始做局
+        </button>
+    </div>
+
+    <div id="modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-white p-8 rounded-xl shadow-2xl max-w-md w-full text-center transform scale-95 opacity-0 transition-all duration-300 ease-out" id="modalContent">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-6" id="modalTitle">做局中...</h2>
+
+            <div class="w-full bg-gray-200 rounded-full h-4 mb-6 overflow-hidden">
+                <div id="progressBarFill" class="bg-gradient-to-r from-green-400 to-blue-500 h-full rounded-full transition-all duration-100 ease-linear" style="width: 0%;"></div>
+            </div>
+
+            <p id="resultMessage" class="text-lg text-gray-700 font-medium hidden">恭喜你被资本浪费了十秒。</p>
+
+            <button id="closeButton" class="mt-6 bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-6 rounded-full transition duration-300 ease-in-out hidden focus:outline-none focus:ring-4 focus:ring-gray-300">
+                关闭
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const startButton = document.getElementById('startButton');
+        const modal = document.getElementById('modal');
+        const modalContent = document.getElementById('modalContent');
+        const progressBarFill = document.getElementById('progressBarFill');
+        const resultMessage = document.getElementById('resultMessage');
+        const modalTitle = document.getElementById('modalTitle');
+        const closeButton = document.getElementById('closeButton');
+
+        let progressInterval;
+        let progress = 0;
+
+        // 显示弹窗的函数
+        function showModal() {
+            modal.classList.remove('hidden');
+            // 触发弹窗进入动画
+            setTimeout(() => {
+                modalContent.classList.remove('scale-95', 'opacity-0');
+                modalContent.classList.add('scale-100', 'opacity-100');
+            }, 10); // 小延迟确保动画触发
+        }
+
+        // 隐藏弹窗的函数
+        function hideModal() {
+            modalContent.classList.remove('scale-100', 'opacity-100');
+            modalContent.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                resetModal(); // 隐藏后重置弹窗状态
+            }, 300); // 等待动画完成再隐藏
+        }
+
+        // 重置弹窗状态
+        function resetModal() {
+            progressBarFill.style.width = '0%';
+            progressBarFill.classList.remove('progress-bar-fill'); // 移除动画类
+            resultMessage.classList.add('hidden');
+            closeButton.classList.add('hidden');
+            modalTitle.textContent = '做局中...';
+            progress = 0;
+            clearInterval(progressInterval); // 清除可能存在的定时器
+        }
+
+        // 开始做局的事件监听器
+        startButton.addEventListener('click', () => {
+            showModal();
+            // 确保进度条动画从0开始
+            progressBarFill.style.width = '0%';
+            // 添加动画类，开始动画
+            progressBarFill.classList.add('progress-bar-fill');
+
+            // 模拟进度条更新（虽然CSS动画已经处理了，这里可以用于更复杂的逻辑或显示百分比）
+            // 如果需要显示百分比，可以每隔一段时间更新一个文本元素
+            let startTime = Date.now();
+            progressInterval = setInterval(() => {
+                let elapsedTime = Date.now() - startTime;
+                progress = (elapsedTime / 10000) * 100; // 10秒总时长
+                if (progress >= 100) {
+                    progress = 100;
+                    clearInterval(progressInterval);
+                    modalTitle.textContent = '做局完成！';
+                    resultMessage.classList.remove('hidden');
+                    closeButton.classList.remove('hidden');
+                }
+                // 如果需要显示百分比，可以在这里更新一个元素
+                // console.log(`Progress: ${Math.floor(progress)}%`);
+            }, 100); // 每100毫秒更新一次
+
+            // 10秒后显示结果
+            setTimeout(() => {
+                clearInterval(progressInterval); // 确保清除定时器
+                modalTitle.textContent = '做局完成！';
+                resultMessage.classList.remove('hidden');
+                closeButton.classList.remove('hidden');
+            }, 10000); // 10秒
+        });
+
+        // 关闭按钮的事件监听器
+        closeButton.addEventListener('click', hideModal);
+
+        // 点击弹窗外部关闭 (可选，但用户体验更好)
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                hideModal();
+            }
+        });
+    </script>
+</body>
+</html>
