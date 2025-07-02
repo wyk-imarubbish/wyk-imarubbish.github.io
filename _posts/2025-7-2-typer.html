@@ -1,0 +1,506 @@
+---
+layout: None
+title: C++打字练习
+tag: 网页
+---
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>C++ 打字练习</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #1a202c; /* Equivalent to tailwind bg-gray-900 */
+            color: #a0aec0; /* Equivalent to tailwind text-gray-400 */
+        }
+        .font-fira-code {
+            font-family: 'Fira Code', monospace;
+            /* This is the key change to preserve whitespace and newlines */
+            white-space: pre-wrap;
+        }
+        /* Current character highlight instead of a cursor */
+        .current {
+            background-color: #4a5568; /* gray-700 */
+            border-radius: 3px;
+        }
+        .correct { 
+            color: #68d391; /* green-400 */
+        }
+        .incorrect { 
+            color: #fc8181; /* red-400 */
+            background-color: #4a2b2b; /* dark red background */
+            text-decoration: underline; 
+            text-decoration-color: #e53e3e; /* red-500 */
+            border-radius: 3px;
+        }
+        .untyped { 
+            color: #a0aec0; /* gray-400 */
+        }
+
+        /* Modal styles */
+        .modal-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 50;
+        }
+        .modal-content {
+            background-color: #2d3748; /* gray-800 */
+            padding: 2rem;
+            border-radius: 0.5rem;
+            width: 90%;
+            max-width: 500px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-4">
+
+    <main class="w-full max-w-4xl mx-auto">
+        <h1 class="text-3xl md:text-4xl font-bold text-center text-white mb-2">C++ 打字练习</h1>
+        <p class="text-center text-gray-500 mb-8">练习 C++ 代码 (使用 Ctrl+Enter 跳过当前行)</p>
+
+        <!-- Stats Display -->
+        <div id="stats" class="grid grid-cols-3 gap-4 mb-6 text-center text-white text-2xl font-semibold">
+            <div>
+                <p class="text-sm text-gray-400">WPM</p>
+                <p id="wpm">0</p>
+            </div>
+            <div>
+                <p class="text-sm text-gray-400">准确率</p>
+                <p id="accuracy">100%</p>
+            </div>
+            <div>
+                <p class="text-sm text-gray-400">用时</p>
+                <p id="timer">0</p>
+            </div>
+        </div>
+        
+        <!-- File Name Display -->
+        <div id="file-name-display" class="text-center text-sm text-gray-500 mb-4 h-5"></div>
+
+
+        <!-- Text Display -->
+        <div id="text-display-container" class="bg-gray-800 p-6 rounded-lg shadow-lg mb-6 relative min-h-[10rem]">
+            <div id="text-display" class="font-fira-code text-xl md:text-2xl leading-relaxed tracking-wider select-none w-full">
+                <!-- Text will be generated here -->
+            </div>
+            <textarea id="text-input" class="absolute top-0 left-0 w-full h-full opacity-0 cursor-default" spellcheck="false" autocorrect="off" autocapitalize="off"></textarea>
+        </div>
+
+        <!-- Controls -->
+        <div class="flex flex-wrap items-center justify-center gap-4 my-8">
+            <div class="flex items-center gap-2">
+                <label for="mode-select" class="text-white">模式:</label>
+                <select id="mode-select" class="bg-gray-700 text-white rounded px-3 py-2 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="cpp">内置 C++ 代码</option>
+                </select>
+            </div>
+            <input type="file" id="file-input" multiple accept=".cpp,.h,.hpp" class="hidden">
+            <button id="load-local-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded transition-colors duration-200">
+                选择本地文件
+            </button>
+            <button id="restart-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition-colors duration-200">
+                重新开始
+            </button>
+        </div>
+        <p id="local-status" class="text-sm text-gray-500 text-center -mt-4"></p>
+
+    </main>
+
+    <!-- Results Modal -->
+    <div id="results-modal" class="modal-backdrop hidden">
+        <div class="modal-content">
+            <h2 class="text-3xl font-bold text-white mb-4">练习完成!</h2>
+            <div class="grid grid-cols-2 gap-4 text-lg mb-6">
+                <div class="text-white">
+                    <p class="text-gray-400">最终 WPM</p>
+                    <p id="final-wpm" class="text-4xl font-bold">0</p>
+                </div>
+                <div class="text-white">
+                    <p class="text-gray-400">准确率</p>
+                    <p id="final-accuracy" class="text-4xl font-bold">0%</p>
+                </div>
+            </div>
+             <div class="text-white mb-6">
+                <p class="text-gray-400">总用时</p>
+                <p id="final-time" class="text-4xl font-bold">0s</p>
+            </div>
+            <!-- Action Buttons -->
+            <div id="single-action-group">
+                <button id="play-again-btn" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded transition-colors duration-200">
+                    再来一次
+                </button>
+            </div>
+            <div id="multi-action-group" class="hidden grid grid-cols-2 gap-4">
+                 <button id="restart-snippet-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded transition-colors duration-200">
+                    重新开始
+                </button>
+                <button id="next-snippet-btn" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded transition-colors duration-200">
+                    下一段代码
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        // DOM Elements
+        const textDisplay = document.getElementById('text-display');
+        const textInput = document.getElementById('text-input');
+        const timerEl = document.getElementById('timer');
+        const wpmEl = document.getElementById('wpm');
+        const accuracyEl = document.getElementById('accuracy');
+        const restartBtn = document.getElementById('restart-btn');
+        const modeSelect = document.getElementById('mode-select');
+        const loadLocalBtn = document.getElementById('load-local-btn');
+        const fileInput = document.getElementById('file-input');
+        const localStatus = document.getElementById('local-status');
+        const fileNameDisplay = document.getElementById('file-name-display');
+        const resultsModal = document.getElementById('results-modal');
+        const finalWpmEl = document.getElementById('final-wpm');
+        const finalAccuracyEl = document.getElementById('final-accuracy');
+        const finalTimeEl = document.getElementById('final-time');
+        const playAgainBtn = document.getElementById('play-again-btn');
+        const singleActionGroup = document.getElementById('single-action-group');
+        const multiActionGroup = document.getElementById('multi-action-group');
+        const restartSnippetBtn = document.getElementById('restart-snippet-btn');
+        const nextSnippetBtn = document.getElementById('next-snippet-btn');
+
+
+        // Text sources
+        const TEXT_SOURCES = {
+            cpp: [
+                '#include <iostream>\n#include <vector>\n\nint main() {\n    std::vector<int> numbers = {1, 2, 3, 4, 5};\n    for (int num : numbers) {\n        std::cout << num << " ";\n    }\n    std::cout << std::endl;\n    return 0;\n}',
+                'for (int i = 0; i < 10; ++i) {\n    if (i % 2 == 0) {\n        std::cout << i << " is even." << std::endl;\n    }\n}',
+                'class Rectangle {\nprivate:\n    int width, height;\npublic:\n    void set_values(int w, int h) {\n        width = w;\n        height = h;\n    }\n    int area() {\n        return width * height;\n    }\n};',
+            ]
+        };
+        
+        // State
+        let timerInterval;
+        let timeElapsed = 0;
+        let testActive = false;
+        let currentIndex = 0;
+        let errors = 0;
+        let totalCharsTyped = 0;
+        let startTime;
+        let localFiles = []; // To store file objects {name, content}
+        let currentTextContent = '';
+        let currentLocalFileIndex = -1;
+
+        // --- Functions ---
+
+        function loadNewSnippet() {
+            const mode = modeSelect.value;
+            fileNameDisplay.textContent = ''; // Clear file name
+
+            if (mode === 'local' && localFiles.length > 0) {
+                currentLocalFileIndex = Math.floor(Math.random() * localFiles.length);
+                const file = localFiles[currentLocalFileIndex];
+                currentTextContent = file.content;
+                fileNameDisplay.textContent = `当前文件: ${file.name}`;
+            } else {
+                const sourceArray = TEXT_SOURCES[mode];
+                const randomIndex = Math.floor(Math.random() * sourceArray.length);
+                currentTextContent = sourceArray[randomIndex];
+            }
+            resetTestState();
+        }
+
+        function loadNextSnippet() {
+            if (modeSelect.value !== 'local' || localFiles.length === 0) return;
+            currentLocalFileIndex = (currentLocalFileIndex + 1) % localFiles.length;
+            const file = localFiles[currentLocalFileIndex];
+            currentTextContent = file.content;
+            fileNameDisplay.textContent = `当前文件: ${file.name}`;
+            resetTestState();
+        }
+
+        function reloadCurrentSnippet() {
+            // The text content is already in currentTextContent, just reset the state
+            resetTestState();
+        }
+
+        function populateText() {
+            textDisplay.innerHTML = ''; // Clear previous text
+            currentTextContent.split('').forEach(char => {
+                const charSpan = document.createElement('span');
+                charSpan.className = 'untyped';
+                charSpan.textContent = char;
+                textDisplay.appendChild(charSpan);
+            });
+            const firstSpan = textDisplay.querySelector('span');
+            if (firstSpan) {
+                firstSpan.classList.add('current');
+            }
+        }
+
+        function resetTestState() {
+            clearInterval(timerInterval);
+            testActive = false;
+            timeElapsed = 0;
+            currentIndex = 0;
+            errors = 0;
+            totalCharsTyped = 0;
+            startTime = null;
+
+            timerEl.textContent = '0';
+            wpmEl.textContent = '0';
+            accuracyEl.textContent = '100%';
+            textInput.value = '';
+            populateText();
+            textInput.focus();
+            resultsModal.classList.add('hidden');
+        }
+
+        function startTest() {
+            if (testActive) return;
+            testActive = true;
+            startTime = new Date();
+            timerInterval = setInterval(() => {
+                timeElapsed++;
+                timerEl.textContent = timeElapsed;
+                updateWPM();
+            }, 1000);
+        }
+
+        function endTest() {
+            clearInterval(timerInterval);
+            testActive = false;
+            textInput.blur();
+            updateWPM();
+            updateAccuracy();
+            
+            finalWpmEl.textContent = wpmEl.textContent;
+            finalAccuracyEl.textContent = accuracyEl.textContent;
+            finalTimeEl.textContent = `${timeElapsed}s`;
+
+            if (modeSelect.value === 'local' && localFiles.length > 1) {
+                singleActionGroup.classList.add('hidden');
+                multiActionGroup.classList.remove('hidden');
+            } else {
+                multiActionGroup.classList.add('hidden');
+                singleActionGroup.classList.remove('hidden');
+            }
+
+            resultsModal.classList.remove('hidden');
+        }
+
+        function updateWPM() {
+            if (!startTime || totalCharsTyped === 0) return;
+            const elapsedTimeInMinutes = (new Date() - startTime) / 1000 / 60;
+            if (elapsedTimeInMinutes === 0) return;
+            const grossWPM = (totalCharsTyped / 5) / elapsedTimeInMinutes;
+            wpmEl.textContent = Math.round(grossWPM > 0 ? grossWPM : 0);
+        }
+
+        function updateAccuracy() {
+            if (totalCharsTyped === 0) {
+                accuracyEl.textContent = '100%';
+                return;
+            }
+            const accuracy = ((totalCharsTyped - errors) / totalCharsTyped) * 100;
+            accuracyEl.textContent = `${Math.round(accuracy)}%`;
+        }
+        
+        async function handleFileSelect(event) {
+            const files = event.target.files;
+            if (!files.length) {
+                localStatus.textContent = '未选择任何文件。';
+                return;
+            }
+
+            localFiles = []; // Reset content
+            localStatus.textContent = '正在加载文件...';
+
+            const readPromises = Array.from(files).map(file => {
+                return file.text().then(content => ({
+                    name: file.name,
+                    content: content.replace(/\r\n/g, '\n').replace(/\r/g, '\n')
+                }));
+            });
+            
+            try {
+                const fileObjects = await Promise.all(readPromises);
+                localFiles = fileObjects.filter(file => file.content.trim() !== '');
+
+                if (localFiles.length > 0) {
+                    localStatus.textContent = `已成功加载 ${localFiles.length} 个文件。`;
+                    let localOption = modeSelect.querySelector('option[value="local"]');
+                    if (!localOption) {
+                        localOption = document.createElement('option');
+                        localOption.value = 'local';
+                        localOption.textContent = '本地代码';
+                        modeSelect.prepend(localOption);
+                    }
+                    modeSelect.value = 'local';
+                    loadNewSnippet();
+                } else {
+                    localStatus.textContent = '加载文件失败或所有文件均为空。';
+                }
+            } catch (err) {
+                 console.error('Error reading files:', err);
+                 localStatus.textContent = '读取文件时出错。';
+            }
+        }
+
+
+        function handleInput() {
+            if (!testActive) {
+                startTest();
+            }
+
+            const originalText = textDisplay.textContent;
+            const textSpans = textDisplay.querySelectorAll('span');
+            const typedValue = textInput.value;
+
+            // Handle backspace
+            if (typedValue.length < currentIndex) {
+                 if (currentIndex < textSpans.length) {
+                    textSpans[currentIndex].classList.remove('current');
+                }
+
+                currentIndex--;
+                const prevSpan = textSpans[currentIndex];
+                if (prevSpan) {
+                    if (prevSpan.classList.contains('incorrect')) {
+                        errors--;
+                    }
+                    prevSpan.className = 'untyped current';
+                }
+                updateAccuracy();
+                return;
+            }
+
+            // Handle forward typing
+            const charToType = originalText[currentIndex];
+            const typedChar = typedValue[currentIndex];
+            
+            const currentSpan = textSpans[currentIndex];
+            if(currentSpan){
+                currentSpan.classList.remove('current');
+
+                if (typedChar === charToType) {
+                    currentSpan.className = 'correct';
+                } else {
+                    currentSpan.className = 'incorrect';
+                    errors++;
+                }
+            }
+            totalCharsTyped++;
+            currentIndex++;
+
+            if (currentIndex < textSpans.length) {
+                textSpans[currentIndex].classList.add('current');
+            } else {
+                endTest();
+            }
+
+            updateAccuracy();
+            updateWPM();
+        }
+
+        // --- Event Listeners ---
+        textInput.addEventListener('input', handleInput);
+        restartBtn.addEventListener('click', loadNewSnippet);
+        modeSelect.addEventListener('change', loadNewSnippet);
+        loadLocalBtn.addEventListener('click', () => fileInput.click()); 
+        fileInput.addEventListener('change', handleFileSelect); 
+        playAgainBtn.addEventListener('click', reloadCurrentSnippet);
+        restartSnippetBtn.addEventListener('click', reloadCurrentSnippet);
+        nextSnippetBtn.addEventListener('click', loadNextSnippet);
+        
+        window.addEventListener('keydown', (e) => {
+            if (document.activeElement !== textInput) {
+                textInput.focus();
+            }
+            
+            if (e.key === 'Tab') {
+                e.preventDefault();
+            }
+
+            // Handle Enter with auto-indentation or force skip line
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                if (!testActive) startTest();
+                if (!testActive) return;
+
+                const originalText = textDisplay.textContent;
+                const textSpans = textDisplay.querySelectorAll('span');
+                
+                // Force skip to next line with Ctrl+Enter
+                if (e.ctrlKey) {
+                    let nextNewlineIndex = originalText.indexOf('\n', currentIndex);
+                    if (nextNewlineIndex === -1) {
+                        nextNewlineIndex = originalText.length; // Skip to the end if no more newlines
+                    }
+
+                    const substringToSkip = originalText.substring(currentIndex, nextNewlineIndex);
+                    textInput.value += substringToSkip;
+
+                    for (let i = currentIndex; i < nextNewlineIndex; i++) {
+                        textSpans[i].classList.remove('current');
+                        textSpans[i].className = 'untyped'; // Leave as untyped
+                    }
+                    currentIndex = nextNewlineIndex;
+                }
+
+                if (currentIndex >= originalText.length) {
+                    endTest();
+                    return;
+                }
+
+                if (originalText[currentIndex] === '\n') {
+                    // Correctly typed newline (or just skipped to it)
+                    textSpans[currentIndex].classList.remove('current');
+                    textSpans[currentIndex].className = 'correct';
+                    textInput.value += '\n';
+                    
+                    totalCharsTyped++;
+                    currentIndex++;
+
+                    // Auto-complete indentation
+                    while (currentIndex < originalText.length && originalText[currentIndex] === ' ') {
+                        textSpans[currentIndex].className = 'correct';
+                        textInput.value += ' ';
+                        totalCharsTyped++;
+                        currentIndex++;
+                    }
+
+                    // Set next character as current
+                    if (currentIndex < textSpans.length) {
+                        textSpans[currentIndex].classList.add('current');
+                    } else {
+                        endTest();
+                    }
+                    updateAccuracy();
+                    updateWPM();
+                } else if(!e.ctrlKey) {
+                    // Incorrectly typed newline
+                    const currentSpan = textSpans[currentIndex];
+                    if (currentSpan) {
+                        currentSpan.className = 'incorrect';
+                    }
+                }
+            }
+        });
+
+        // --- Initial Setup ---
+        loadNewSnippet();
+
+    </script>
+</body>
+</html>
